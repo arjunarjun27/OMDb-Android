@@ -14,10 +14,10 @@ public interface ApiCall {
     String BASE_URL = "http://www.omdbapi.com";
 
     @GET("/")
-    Call<SearchResultModel> search(@Query("s") String query);
+    Call<SearchResultModel> search(@Query("s") String query, @Query("type") String type);
 
     @GET("/")
-    Call<MovieModel> getMovie(@Query("t") String title);
+    Call<MovieModel> getMovie(@Query("i") String imdbId);
 
     class Factory {
         public static ApiCall service;
