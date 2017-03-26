@@ -10,6 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.sdsmdg.hareshkh.omdb.HomeActivity;
 import com.sdsmdg.hareshkh.omdb.R;
@@ -20,11 +21,11 @@ import java.util.ArrayList;
 
 public class RecyclerListFragment extends Fragment {
 
-    private RecyclerView movieListRecycler;
+    public RecyclerView movieListRecycler;
     private ArrayList<MovieModel> movies;
     public ListRecyclerAdapter listRecyclerAdapter;
     private LinearLayoutManager linearLayoutManager;
-
+    public TextView message;
 
     public RecyclerListFragment() {
         // Required empty public constructor
@@ -52,6 +53,7 @@ public class RecyclerListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         movieListRecycler = (RecyclerView) view.findViewById(R.id.list_recycler);
+        message = (TextView) view.findViewById(R.id.message);
         if (movies != null) {
             listRecyclerAdapter = new ListRecyclerAdapter(getContext(), movies);
             linearLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
@@ -59,5 +61,7 @@ public class RecyclerListFragment extends Fragment {
             movieListRecycler.setItemAnimator(new DefaultItemAnimator());
             movieListRecycler.setAdapter(listRecyclerAdapter);
         }
+        movieListRecycler.setVisibility(View.GONE);
+        message.setVisibility(View.VISIBLE);
     }
 }

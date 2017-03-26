@@ -14,6 +14,7 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 
 import com.sdsmdg.hareshkh.omdb.fragments.tabs.RecyclerGridFragment;
 import com.sdsmdg.hareshkh.omdb.fragments.tabs.RecyclerListFragment;
@@ -105,11 +106,16 @@ public class HomeActivity extends AppCompatActivity {
                 searchResult = response.body();
                 if (searchResult.getResponse().equals("True")) {
                     getMovies();
+                    listFragment.message.setVisibility(View.GONE);
+                    listFragment.movieListRecycler.setVisibility(View.VISIBLE);
                 } else {
                     //Movie not found
                     movies.clear();
                     progressDialog.dismiss();
                     listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                    listFragment.message.setText("No movies found. Try again.");
+                    listFragment.message.setVisibility(View.VISIBLE);
+                    listFragment.movieListRecycler.setVisibility(View.GONE);
                 }
             }
 
