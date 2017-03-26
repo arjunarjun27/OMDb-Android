@@ -1,5 +1,6 @@
 package com.sdsmdg.hareshkh.omdb;
 
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -29,7 +30,7 @@ import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
-    final String TAG = "HomeActivity";
+    private final String TAG = "HomeActivity";
     public static SearchResultModel searchResult;
     public static ArrayList<MovieModel> movies;
 
@@ -37,6 +38,10 @@ public class HomeActivity extends AppCompatActivity {
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private SearchView searchView;
+    private ProgressDialog progressDialog;
+
+    private RecyclerListFragment listFragment;
+    private RecyclerGridFragment gridFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +50,15 @@ public class HomeActivity extends AppCompatActivity {
 
         movies = new ArrayList<>();
 
+        listFragment = new RecyclerListFragment();
+        gridFragment = new RecyclerGridFragment();
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Fetching...");
+        progressDialog.setCancelable(false);
+
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
 
         viewPager = (ViewPager) findViewById(R.id.viewpager);
@@ -55,40 +66,6 @@ public class HomeActivity extends AppCompatActivity {
 
         tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(viewPager);
-    }
-
-    public void getData(String query) {
-        ApiCall.Factory.getInstance().search(query, "movie").enqueue(new Callback<SearchResultModel>() {
-            @Override
-            public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
-                searchResult = response.body();
-                getMovies();
-            }
-
-            @Override
-            public void onFailure(Call<SearchResultModel> call, Throwable t) {
-                Log.e(TAG, "Failure : " + t.getMessage());
-            }
-        });
-    }
-
-    public void getMovies() {
-        movies.clear();
-        for (int i = 0; i < searchResult.getSearch().size(); i++) {
-            String imdbId = searchResult.getSearch().get(i).getImdbID();
-            ApiCall.Factory.getInstance().getMovie(imdbId).enqueue(new Callback<MovieModel>() {
-                @Override
-                public void onResponse(Call<MovieModel> call, Response<MovieModel> response) {
-                    movies.add(response.body());
-                    Log.d(TAG, movies.get(movies.size() - 1).getTitle());
-                }
-
-                @Override
-                public void onFailure(Call<MovieModel> call, Throwable t) {
-                    Log.e(TAG, "Failure : " + t.getMessage());
-                }
-            });
-        }
     }
 
     @Override
@@ -104,6 +81,10 @@ public class HomeActivity extends AppCompatActivity {
             public boolean onQueryTextSubmit(String query) {
                 Log.d(TAG, query);
                 getData(query);
+                if (progressDialog != null && !progressDialog.isShowing()) {
+                    progressDialog.show();
+                }
+                searchView.clearFocus();
                 return true;
             }
 
@@ -117,10 +98,64 @@ public class HomeActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    public void getData(String query) {
+        ApiCall.Factory.getInstance().search(query, "movie").enqueue(new Callback<SearchResultModel>() {
+            @Override
+            public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
+                searchResult = response.body();
+                if (searchResult.getResponse().equals("True")) {
+                    getMovies();
+                } else {
+                    //Movie not found
+                    movies.clear();
+                    progressDialog.dismiss();
+                    listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SearchResultModel> call, Throwable t) {
+                Log.e(TAG, "Failure : " + t.getMessage());
+            }
+        });
+    }
+
+    public void getMovies() {
+        movies.clear();
+        final int[] count = {0};
+        for (int i = 0; i < searchResult.getSearch().size(); i++) {
+            String imdbId = searchResult.getSearch().get(i).getImdbID();
+            ApiCall.Factory.getInstance().getMovie(imdbId).enqueue(new Callback<MovieModel>() {
+                @Override
+                public void onResponse(Call<MovieModel> call, Response<MovieModel> response) {
+                    movies.add(response.body());
+                    Log.d(TAG, movies.get(movies.size() - 1).getTitle());
+                    count[0]++;
+                    isDataFetchComplete(count[0]);
+                }
+
+                @Override
+                public void onFailure(Call<MovieModel> call, Throwable t) {
+                    Log.e(TAG, "Failure : " + t.getMessage());
+                    isDataFetchComplete(count[0]);
+                    count[0]++;
+                }
+            });
+        }
+        listFragment.listRecyclerAdapter.notifyDataSetChanged();
+    }
+
+    private void isDataFetchComplete(int count) {
+        if (count == searchResult.getSearch().size()) {
+            progressDialog.dismiss();
+            listFragment.listRecyclerAdapter.notifyDataSetChanged();
+        }
+    }
+
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFragment(new RecyclerListFragment(), "LIST");
-        adapter.addFragment(new RecyclerGridFragment(), "GRID");
+        adapter.addFragment(listFragment, "LIST");
+        adapter.addFragment(gridFragment, "GRID");
         viewPager.setAdapter(adapter);
     }
 
