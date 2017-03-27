@@ -1,25 +1,39 @@
 package com.sdsmdg.hareshkh.omdb.fragments;
 
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
+import android.app.Dialog;
+import android.support.design.widget.BottomSheetDialogFragment;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.sdsmdg.hareshkh.omdb.R;
+import com.squareup.picasso.Picasso;
 
-public class MovieDetailsFragment extends Fragment {
+public class MovieDetailsFragment extends BottomSheetDialogFragment {
 
+    private TextView title, release, time, description;
+    private ImageView poster;
 
     public MovieDetailsFragment() {
         // Required empty public constructor
     }
 
-
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_movie_details, container, false);
-    }
+    public void setupDialog(final Dialog dialog, int style) {
+        super.setupDialog(dialog, style);
+        View contentView = View.inflate(getContext(), R.layout.fragment_movie_details, null);
 
+        poster = (ImageView) contentView.findViewById(R.id.sheet_poster);
+        title = (TextView) contentView.findViewById(R.id.sheet_title);
+        release = (TextView) contentView.findViewById(R.id.sheet_release);
+        time = (TextView) contentView.findViewById(R.id.sheet_time);
+        description = (TextView) contentView.findViewById(R.id.sheet_description);
+
+        Picasso.with(getContext()).load(getArguments().getString("poster")).fit().into(poster);
+        title.setText(getArguments().getString("title"));
+        release.setText(getArguments().getString("release"));
+        time.setText(getArguments().getString("time"));
+        description.setText(getArguments().getString("description"));
+        dialog.setContentView(contentView);
+    }
 }
