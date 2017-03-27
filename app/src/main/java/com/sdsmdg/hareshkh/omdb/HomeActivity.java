@@ -16,8 +16,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 
-import com.sdsmdg.hareshkh.omdb.fragments.tabs.RecyclerGridFragment;
-import com.sdsmdg.hareshkh.omdb.fragments.tabs.RecyclerListFragment;
+import com.sdsmdg.hareshkh.omdb.fragments.tabs.GridRecyclerFragment;
+import com.sdsmdg.hareshkh.omdb.fragments.tabs.ListRecyclerFragment;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
 import com.sdsmdg.hareshkh.omdb.models.SearchResultModel;
 import com.sdsmdg.hareshkh.omdb.retrofit.ApiCall;
@@ -41,8 +41,8 @@ public class HomeActivity extends AppCompatActivity {
     private SearchView searchView;
     private ProgressDialog progressDialog;
 
-    private RecyclerListFragment listFragment;
-    private RecyclerGridFragment gridFragment;
+    private ListRecyclerFragment listFragment;
+    private GridRecyclerFragment gridFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +51,8 @@ public class HomeActivity extends AppCompatActivity {
 
         movies = new ArrayList<>();
 
-        listFragment = new RecyclerListFragment();
-        gridFragment = new RecyclerGridFragment();
+        listFragment = new ListRecyclerFragment();
+        gridFragment = new GridRecyclerFragment();
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Fetching...");
@@ -107,15 +107,21 @@ public class HomeActivity extends AppCompatActivity {
                 if (searchResult.getResponse().equals("True")) {
                     getMovies();
                     listFragment.message.setVisibility(View.GONE);
+                    gridFragment.message.setVisibility(View.GONE);
                     listFragment.movieListRecycler.setVisibility(View.VISIBLE);
+                    gridFragment.movieGridRecycler.setVisibility(View.VISIBLE);
                 } else {
                     //Movie not found
                     movies.clear();
                     progressDialog.dismiss();
                     listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                    gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
                     listFragment.message.setText("No movies found. Try again.");
+                    gridFragment.message.setText("No movies found. Try again.");
                     listFragment.message.setVisibility(View.VISIBLE);
+                    gridFragment.message.setVisibility(View.VISIBLE);
                     listFragment.movieListRecycler.setVisibility(View.GONE);
+                    gridFragment.movieGridRecycler.setVisibility(View.GONE);
                 }
             }
 
@@ -148,13 +154,13 @@ public class HomeActivity extends AppCompatActivity {
                 }
             });
         }
-        listFragment.listRecyclerAdapter.notifyDataSetChanged();
     }
 
     private void isDataFetchComplete(int count) {
         if (count == searchResult.getSearch().size()) {
             progressDialog.dismiss();
             listFragment.listRecyclerAdapter.notifyDataSetChanged();
+            gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
         }
     }
 

@@ -19,7 +19,7 @@ import com.sdsmdg.hareshkh.omdb.models.MovieModel;
 
 import java.util.ArrayList;
 
-public class RecyclerListFragment extends Fragment {
+public class ListRecyclerFragment extends Fragment {
 
     public RecyclerView movieListRecycler;
     private ArrayList<MovieModel> movies;
@@ -27,7 +27,7 @@ public class RecyclerListFragment extends Fragment {
     private LinearLayoutManager linearLayoutManager;
     public TextView message;
 
-    public RecyclerListFragment() {
+    public ListRecyclerFragment() {
         // Required empty public constructor
     }
 

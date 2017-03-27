@@ -18,6 +18,7 @@
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/poster"
         android:paddingLeft="5dp"
+        android:textColor="@color/textColorPrimary"
         android:textSize="18sp" />
 
     <TextView
@@ -30,6 +31,7 @@
         android:maxLines="2"
         android:paddingLeft="5dp"
         android:paddingTop="5dp"
+        android:textColor="@color/textColorPrimary"
         android:textSize="15sp" />
 
 </RelativeLayout>
