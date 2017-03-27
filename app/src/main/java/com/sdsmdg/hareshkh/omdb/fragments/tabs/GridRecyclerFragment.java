@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
@@ -17,8 +18,10 @@ import android.widget.TextView;
 import com.sdsmdg.hareshkh.omdb.HomeActivity;
 import com.sdsmdg.hareshkh.omdb.R;
 import com.sdsmdg.hareshkh.omdb.adapters.GridRecyclerAdapter;
+import com.sdsmdg.hareshkh.omdb.fragments.MovieDetailsFragment;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
 import com.sdsmdg.hareshkh.omdb.utilities.GridSpacingItemDecoration;
+import com.sdsmdg.hareshkh.omdb.utilities.ItemTouchListener;
 import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 
 import java.util.ArrayList;
@@ -92,6 +95,33 @@ public class GridRecyclerFragment extends Fragment {
                         }
                         isLoading = true;
                     }
+                }
+            });
+
+            movieGridRecycler.addOnItemTouchListener(new ItemTouchListener(movieGridRecycler) {
+                @Override
+                public boolean onClick(RecyclerView parent, View view, int position, long id) {
+                    BottomSheetDialogFragment bottomSheetDialogFragment = new MovieDetailsFragment();
+                    Bundle bundle = new Bundle();
+                    MovieModel movie = movies.get(position);
+                    bundle.putString("title", movie.getTitle());
+                    bundle.putString("release", movie.getReleased());
+                    bundle.putString("time", movie.getRuntime());
+                    bundle.putString("description", movie.getPlot());
+                    bundle.putString("poster", movie.getPoster());
+                    bottomSheetDialogFragment.setArguments(bundle);
+                    bottomSheetDialogFragment.show(getActivity().getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
+                    return true;
+                }
+
+                @Override
+                public boolean onLongClick(RecyclerView parent, View view, int position, long id) {
+                    return false;
+                }
+
+                @Override
+                public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
                 }
             });
         }
