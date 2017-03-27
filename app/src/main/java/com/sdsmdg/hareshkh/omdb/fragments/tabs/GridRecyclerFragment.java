@@ -2,7 +2,6 @@ package com.sdsmdg.hareshkh.omdb.fragments.tabs;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.v4.app.Fragment;
@@ -29,11 +28,10 @@ import java.util.ArrayList;
 public class GridRecyclerFragment extends Fragment {
 
     public RecyclerView movieGridRecycler;
-    private ArrayList<MovieModel> movies;
     public GridRecyclerAdapter gridRecyclerAdapter;
-    private GridLayoutManager gridLayoutManager;
     public TextView message;
-
+    private ArrayList<MovieModel> movies;
+    private GridLayoutManager gridLayoutManager;
     private OnLoadMoreListener mOnLoadMoreListener;
 
     private boolean isLoading;

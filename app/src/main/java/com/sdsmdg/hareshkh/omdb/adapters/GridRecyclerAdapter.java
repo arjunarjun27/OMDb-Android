@@ -17,11 +17,10 @@ import java.util.ArrayList;
 
 public class GridRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private Context context;
-    private ArrayList<MovieModel> movies;
-
     private final int VIEW_TYPE_ITEM = 0;
     private final int VIEW_TYPE_LOADING = 1;
+    private Context context;
+    private ArrayList<MovieModel> movies;
 
     public GridRecyclerAdapter(Context context, ArrayList<MovieModel> movies) {
         this.context = context;

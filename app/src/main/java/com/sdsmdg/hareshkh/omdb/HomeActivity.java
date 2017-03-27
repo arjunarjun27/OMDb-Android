@@ -25,7 +25,6 @@ import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Handler;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -33,11 +32,12 @@ import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
+    public static ArrayList<MovieModel> movies;
     private final String TAG = "HomeActivity";
     public SearchResultModel searchResult;
-    public static ArrayList<MovieModel> movies;
     private int pagesLoaded;
     private String latestQuery;
+    private boolean reachedEnd;
 
     private Toolbar toolbar;
     private TabLayout tabLayout;
@@ -111,6 +111,7 @@ public class HomeActivity extends AppCompatActivity {
             listFragment.listRecyclerAdapter.notifyDataSetChanged();
             gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
             pagesLoaded = 0;
+            reachedEnd = false;
             ApiCall.Factory.getInstance().search(query, "movie", 1).enqueue(new Callback<SearchResultModel>() {
                 @Override
                 public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
@@ -148,16 +149,30 @@ public class HomeActivity extends AppCompatActivity {
                 }
             });
         } else {
-            pagesLoaded++;
-            ApiCall.Factory.getInstance().search(query, "movie", pagesLoaded).enqueue(new Callback<SearchResultModel>() {
-                @Override
-                public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
-                    searchResult = response.body();
-                    if (searchResult.getResponse().equals("True")) {
-                        //Movie Found
-                        getMovies();
-                    } else {
-                        //Reached End
+            if (!reachedEnd) {
+                pagesLoaded++;
+                ApiCall.Factory.getInstance().search(query, "movie", pagesLoaded).enqueue(new Callback<SearchResultModel>() {
+                    @Override
+                    public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
+                        searchResult = response.body();
+                        if (searchResult.getResponse().equals("True")) {
+                            //Movie Found
+                            getMovies();
+                        } else {
+                            //Reached End
+                            movies.remove(movies.size() - 1);
+                            reachedEnd = true;
+                            listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
+                            gridFragment.gridRecyclerAdapter.notifyItemRemoved(movies.size());
+                            listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                            gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
+                            listFragment.setLoaded();
+                            gridFragment.setLoaded();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<SearchResultModel> call, Throwable t) {
                         movies.remove(movies.size() - 1);
                         listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
                         gridFragment.gridRecyclerAdapter.notifyItemRemoved(movies.size());
@@ -166,19 +181,8 @@ public class HomeActivity extends AppCompatActivity {
                         listFragment.setLoaded();
                         gridFragment.setLoaded();
                     }
-                }
-
-                @Override
-                public void onFailure(Call<SearchResultModel> call, Throwable t) {
-                    movies.remove(movies.size() - 1);
-                    listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
-                    gridFragment.gridRecyclerAdapter.notifyItemRemoved(movies.size());
-                    listFragment.listRecyclerAdapter.notifyDataSetChanged();
-                    gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
-                    listFragment.setLoaded();
-                    gridFragment.setLoaded();
-                }
-            });
+                });
+            }
         }
     }
 
@@ -206,7 +210,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void isDataFetchComplete(int count) {
-        if (count == searchResult.getSearch().size()) {
+        if (searchResult.getResponse().equals("True") && count == searchResult.getSearch().size()) {
             progressDialog.dismiss();
             for (int i = 0; i < movies.size(); i++) {
                 if (movies.get(i) == null) {
@@ -226,17 +230,21 @@ public class HomeActivity extends AppCompatActivity {
         listFragment.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
-                movies.add(null);
-                listFragment.listRecyclerAdapter.notifyItemInserted(movies.size() - 1);
-                getData(latestQuery, false);
+                if (!reachedEnd) {
+                    movies.add(null);
+                    listFragment.listRecyclerAdapter.notifyItemInserted(movies.size() - 1);
+                    getData(latestQuery, false);
+                }
             }
         });
         gridFragment.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
-                movies.add(null);
-                gridFragment.gridRecyclerAdapter.notifyItemInserted(movies.size() - 1);
-                getData(latestQuery, false);
+                if (!reachedEnd) {
+                    movies.add(null);
+                    gridFragment.gridRecyclerAdapter.notifyItemInserted(movies.size() - 1);
+                    getData(latestQuery, false);
+                }
             }
         });
     }

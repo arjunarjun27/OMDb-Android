@@ -19,7 +19,7 @@
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/poster"
         android:paddingLeft="5dp"
-        android:textColor="@color/textColorPrimary"
+        android:textColor="@color/black"
         android:textSize="18sp" />
 
     <TextView

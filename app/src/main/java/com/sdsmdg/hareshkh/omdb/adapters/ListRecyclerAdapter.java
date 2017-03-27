@@ -1,7 +1,6 @@
 package com.sdsmdg.hareshkh.omdb.adapters;
 
 import android.content.Context;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,18 +11,16 @@ import android.widget.TextView;
 
 import com.sdsmdg.hareshkh.omdb.R;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
-import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
 public class ListRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private Context context;
-    private ArrayList<MovieModel> movies;
-
     private final int VIEW_TYPE_ITEM = 0;
     private final int VIEW_TYPE_LOADING = 1;
+    private Context context;
+    private ArrayList<MovieModel> movies;
 
     public ListRecyclerAdapter(Context context, ArrayList<MovieModel> movies) {
         this.context = context;

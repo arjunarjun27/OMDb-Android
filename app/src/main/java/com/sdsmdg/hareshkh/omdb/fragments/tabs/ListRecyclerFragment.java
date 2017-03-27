@@ -26,11 +26,10 @@ import java.util.ArrayList;
 public class ListRecyclerFragment extends Fragment {
 
     public RecyclerView movieListRecycler;
-    private ArrayList<MovieModel> movies;
     public ListRecyclerAdapter listRecyclerAdapter;
-    private LinearLayoutManager linearLayoutManager;
     public TextView message;
-
+    private ArrayList<MovieModel> movies;
+    private LinearLayoutManager linearLayoutManager;
     private OnLoadMoreListener mOnLoadMoreListener;
 
     private boolean isLoading;
