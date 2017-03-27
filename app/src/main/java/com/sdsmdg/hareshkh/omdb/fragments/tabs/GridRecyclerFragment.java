@@ -19,6 +19,7 @@ import com.sdsmdg.hareshkh.omdb.R;
 import com.sdsmdg.hareshkh.omdb.adapters.GridRecyclerAdapter;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
 import com.sdsmdg.hareshkh.omdb.utilities.GridSpacingItemDecoration;
+import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 
 import java.util.ArrayList;
 
@@ -30,8 +31,18 @@ public class GridRecyclerFragment extends Fragment {
     private GridLayoutManager gridLayoutManager;
     public TextView message;
 
+    private OnLoadMoreListener mOnLoadMoreListener;
+
+    private boolean isLoading;
+    private int visibleThreshold = 5;
+    private int lastVisibleItem, totalItemCount;
+
     public GridRecyclerFragment() {
         // Required empty public constructor
+    }
+
+    public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
+        this.mOnLoadMoreListener = mOnLoadMoreListener;
     }
 
     @Override
@@ -58,12 +69,31 @@ public class GridRecyclerFragment extends Fragment {
         movieGridRecycler = (RecyclerView) view.findViewById(R.id.grid_recycler);
         message = (TextView) view.findViewById(R.id.message);
         if (movies != null) {
-            gridRecyclerAdapter = new GridRecyclerAdapter(getContext(), movies);
             gridLayoutManager = new GridLayoutManager(getContext(), 2);
             movieGridRecycler.setLayoutManager(gridLayoutManager);
-            movieGridRecycler.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(3), true));
-            movieGridRecycler.setItemAnimator(new DefaultItemAnimator());
+
+            gridRecyclerAdapter = new GridRecyclerAdapter(getContext(), movies);
             movieGridRecycler.setAdapter(gridRecyclerAdapter);
+
+            movieGridRecycler.setItemAnimator(new DefaultItemAnimator());
+            movieGridRecycler.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(3), true));
+
+            movieGridRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+
+                    totalItemCount = gridLayoutManager.getItemCount();
+                    lastVisibleItem = gridLayoutManager.findLastVisibleItemPosition();
+
+                    if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                        if (mOnLoadMoreListener != null) {
+                            mOnLoadMoreListener.onLoadMore();
+                        }
+                        isLoading = true;
+                    }
+                }
+            });
         }
         movieGridRecycler.setVisibility(View.GONE);
         message.setVisibility(View.VISIBLE);
@@ -72,5 +102,9 @@ public class GridRecyclerFragment extends Fragment {
     private int dpToPx(int dp) {
         Resources r = getResources();
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
+    }
+
+    public void setLoaded() {
+        isLoading = false;
     }
 }

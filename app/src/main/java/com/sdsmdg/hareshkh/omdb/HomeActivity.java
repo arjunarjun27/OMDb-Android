@@ -108,6 +108,8 @@ public class HomeActivity extends AppCompatActivity {
     public void getData(final String query, boolean newQuery) {
         if (newQuery) {
             movies.clear();
+            listFragment.listRecyclerAdapter.notifyDataSetChanged();
+            gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
             pagesLoaded = 0;
             ApiCall.Factory.getInstance().search(query, "movie", 1).enqueue(new Callback<SearchResultModel>() {
                 @Override
@@ -124,8 +126,6 @@ public class HomeActivity extends AppCompatActivity {
                     } else {
                         //Movie not found
                         progressDialog.dismiss();
-                        listFragment.listRecyclerAdapter.notifyDataSetChanged();
-                        gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
                         listFragment.message.setText("No movies found. Try again.");
                         gridFragment.message.setText("No movies found. Try again.");
                         listFragment.message.setVisibility(View.VISIBLE);
@@ -139,8 +139,6 @@ public class HomeActivity extends AppCompatActivity {
                 public void onFailure(Call<SearchResultModel> call, Throwable t) {
                     Log.e(TAG, "Failure : " + t.getMessage());
                     progressDialog.dismiss();
-                    listFragment.listRecyclerAdapter.notifyDataSetChanged();
-                    gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
                     listFragment.message.setText("Query request failed. Try again");
                     gridFragment.message.setText("Query request failed. Try again");
                     listFragment.message.setVisibility(View.VISIBLE);
@@ -159,10 +157,14 @@ public class HomeActivity extends AppCompatActivity {
                         //Movie Found
                         getMovies();
                     } else {
+                        //Reached End
                         movies.remove(movies.size() - 1);
                         listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
+                        gridFragment.gridRecyclerAdapter.notifyItemRemoved(movies.size());
                         listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                        gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
                         listFragment.setLoaded();
+                        gridFragment.setLoaded();
                     }
                 }
 
@@ -170,8 +172,11 @@ public class HomeActivity extends AppCompatActivity {
                 public void onFailure(Call<SearchResultModel> call, Throwable t) {
                     movies.remove(movies.size() - 1);
                     listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
+                    gridFragment.gridRecyclerAdapter.notifyItemRemoved(movies.size());
                     listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                    gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
                     listFragment.setLoaded();
+                    gridFragment.setLoaded();
                 }
             });
         }
@@ -207,11 +212,13 @@ public class HomeActivity extends AppCompatActivity {
                 if (movies.get(i) == null) {
                     movies.remove(i);
                     listFragment.listRecyclerAdapter.notifyItemRemoved(i);
+                    gridFragment.gridRecyclerAdapter.notifyItemRemoved(i);
                 }
             }
             listFragment.listRecyclerAdapter.notifyDataSetChanged();
             listFragment.setLoaded();
             gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
+            gridFragment.setLoaded();
         }
     }
 
@@ -221,6 +228,14 @@ public class HomeActivity extends AppCompatActivity {
             public void onLoadMore() {
                 movies.add(null);
                 listFragment.listRecyclerAdapter.notifyItemInserted(movies.size() - 1);
+                getData(latestQuery, false);
+            }
+        });
+        gridFragment.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                movies.add(null);
+                gridFragment.gridRecyclerAdapter.notifyItemInserted(movies.size() - 1);
                 getData(latestQuery, false);
             }
         });
