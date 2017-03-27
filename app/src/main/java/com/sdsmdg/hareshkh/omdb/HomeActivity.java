@@ -21,6 +21,7 @@ import com.sdsmdg.hareshkh.omdb.fragments.tabs.ListRecyclerFragment;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
 import com.sdsmdg.hareshkh.omdb.models.SearchResultModel;
 import com.sdsmdg.hareshkh.omdb.retrofit.ApiCall;
+import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,8 @@ public class HomeActivity extends AppCompatActivity {
     private final String TAG = "HomeActivity";
     public SearchResultModel searchResult;
     public static ArrayList<MovieModel> movies;
-    public ArrayList<String> imdbIds;
+    private int pagesLoaded;
+    private String latestQuery;
 
     private Toolbar toolbar;
     private TabLayout tabLayout;
@@ -51,10 +53,11 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         movies = new ArrayList<>();
-        imdbIds = new ArrayList<>();
 
         listFragment = new ListRecyclerFragment();
         gridFragment = new GridRecyclerFragment();
+
+        setupLazyLoad();
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Fetching...");
@@ -82,8 +85,8 @@ public class HomeActivity extends AppCompatActivity {
         SearchView.OnQueryTextListener queryTextListener = new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.d(TAG, query);
-                getData(query);
+                HomeActivity.this.latestQuery = query;
+                getData(query, true);
                 if (progressDialog != null && !progressDialog.isShowing()) {
                     progressDialog.show();
                 }
@@ -101,76 +104,82 @@ public class HomeActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    public void getData(final String query) {
-        movies.clear();
-        imdbIds.clear();
-        ApiCall.Factory.getInstance().search(query, "movie", 1).enqueue(new Callback<SearchResultModel>() {
-            @Override
-            public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
-                searchResult = response.body();
-                if (searchResult.getResponse().equals("True")) {
-                    //Movie Found
-                    for (int i = 0; i < searchResult.getSearch().size(); i++) {
-                        imdbIds.add(searchResult.getSearch().get(i).getImdbID());
+    public void getData(final String query, boolean newQuery) {
+        if (newQuery) {
+            movies.clear();
+            pagesLoaded = 0;
+            ApiCall.Factory.getInstance().search(query, "movie", 1).enqueue(new Callback<SearchResultModel>() {
+                @Override
+                public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
+                    searchResult = response.body();
+                    if (searchResult.getResponse().equals("True")) {
+                        //Movie Found
+                        pagesLoaded = 1;
+                        getMovies();
+                        listFragment.message.setVisibility(View.GONE);
+                        gridFragment.message.setVisibility(View.GONE);
+                        listFragment.movieListRecycler.setVisibility(View.VISIBLE);
+                        gridFragment.movieGridRecycler.setVisibility(View.VISIBLE);
+                    } else {
+                        //Movie not found
+                        progressDialog.dismiss();
+                        listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                        gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
+                        listFragment.message.setText("No movies found. Try again.");
+                        gridFragment.message.setText("No movies found. Try again.");
+                        listFragment.message.setVisibility(View.VISIBLE);
+                        gridFragment.message.setVisibility(View.VISIBLE);
+                        listFragment.movieListRecycler.setVisibility(View.GONE);
+                        gridFragment.movieGridRecycler.setVisibility(View.GONE);
                     }
-                    for (int i = 2; i <= (Integer.parseInt(searchResult.getTotalResults()) % 10) + 1; i++) {
-                        ApiCall.Factory.getInstance().search(query, "movie", i).enqueue(new Callback<SearchResultModel>() {
-                            @Override
-                            public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
-                                searchResult = response.body();
-                                for (int j = 0; j < searchResult.getSearch().size(); j++) {
-                                    imdbIds.add(searchResult.getSearch().get(j).getImdbID());
-                                }
-                                getMovies();
-                            }
+                }
 
-                            @Override
-                            public void onFailure(Call<SearchResultModel> call, Throwable t) {
-
-                            }
-                        });
-                    }
-
-                    getMovies();
-
-                    listFragment.message.setVisibility(View.GONE);
-                    gridFragment.message.setVisibility(View.GONE);
-                    listFragment.movieListRecycler.setVisibility(View.VISIBLE);
-                    gridFragment.movieGridRecycler.setVisibility(View.VISIBLE);
-                } else {
-                    //Movie not found
+                @Override
+                public void onFailure(Call<SearchResultModel> call, Throwable t) {
+                    Log.e(TAG, "Failure : " + t.getMessage());
                     progressDialog.dismiss();
                     listFragment.listRecyclerAdapter.notifyDataSetChanged();
                     gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
-                    listFragment.message.setText("No movies found. Try again.");
-                    gridFragment.message.setText("No movies found. Try again.");
+                    listFragment.message.setText("Query request failed. Try again");
+                    gridFragment.message.setText("Query request failed. Try again");
                     listFragment.message.setVisibility(View.VISIBLE);
                     gridFragment.message.setVisibility(View.VISIBLE);
                     listFragment.movieListRecycler.setVisibility(View.GONE);
                     gridFragment.movieGridRecycler.setVisibility(View.GONE);
                 }
-            }
+            });
+        } else {
+            pagesLoaded++;
+            ApiCall.Factory.getInstance().search(query, "movie", pagesLoaded).enqueue(new Callback<SearchResultModel>() {
+                @Override
+                public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
+                    searchResult = response.body();
+                    if (searchResult.getResponse().equals("True")) {
+                        //Movie Found
+                        getMovies();
+                    } else {
+                        movies.remove(movies.size() - 1);
+                        listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
+                        listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                        listFragment.listRecyclerAdapter.setLoaded();
+                    }
+                }
 
-            @Override
-            public void onFailure(Call<SearchResultModel> call, Throwable t) {
-                Log.e(TAG, "Failure : " + t.getMessage());
-                progressDialog.dismiss();
-                listFragment.listRecyclerAdapter.notifyDataSetChanged();
-                gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
-                listFragment.message.setText("Query request failed. Try again");
-                gridFragment.message.setText("Query request failed. Try again");
-                listFragment.message.setVisibility(View.VISIBLE);
-                gridFragment.message.setVisibility(View.VISIBLE);
-                listFragment.movieListRecycler.setVisibility(View.GONE);
-                gridFragment.movieGridRecycler.setVisibility(View.GONE);
-            }
-        });
+                @Override
+                public void onFailure(Call<SearchResultModel> call, Throwable t) {
+                    movies.remove(movies.size() - 1);
+                    listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
+                    listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                    listFragment.listRecyclerAdapter.setLoaded();
+                }
+            });
+        }
     }
 
     public void getMovies() {
         final int[] count = {0};
-        for (int i = 0; i < imdbIds.size(); i++) {
-            String imdbId = imdbIds.get(i);
+        for (int i = 0; i < searchResult.getSearch().size(); i++) {
+            String imdbId = searchResult.getSearch().get(i).getImdbID();
             ApiCall.Factory.getInstance().getMovie(imdbId).enqueue(new Callback<MovieModel>() {
                 @Override
                 public void onResponse(Call<MovieModel> call, Response<MovieModel> response) {
@@ -183,19 +192,34 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<MovieModel> call, Throwable t) {
                     Log.e(TAG, "Failure : " + t.getMessage());
-                    isDataFetchComplete(count[0]);
                     count[0]++;
+                    isDataFetchComplete(count[0]);
                 }
             });
         }
     }
 
     private void isDataFetchComplete(int count) {
-        if (count == imdbIds.size()) {
+        if (count == searchResult.getSearch().size()) {
             progressDialog.dismiss();
+            movies.remove(movies.size() - 1);
+            listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
             listFragment.listRecyclerAdapter.notifyDataSetChanged();
+            listFragment.listRecyclerAdapter.setLoaded();
             gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
         }
+    }
+
+    private void setupLazyLoad() {
+        listFragment.listRecyclerAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                movies.add(null);
+                listFragment.listRecyclerAdapter.notifyItemInserted(movies.size() - 1);
+
+                getData(latestQuery, false);
+            }
+        });
     }
 
     private void setupViewPager(ViewPager viewPager) {
