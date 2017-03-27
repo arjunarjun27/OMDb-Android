@@ -16,7 +16,6 @@ import com.sdsmdg.hareshkh.omdb.HomeActivity;
 import com.sdsmdg.hareshkh.omdb.R;
 import com.sdsmdg.hareshkh.omdb.adapters.ListRecyclerAdapter;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
-import com.sdsmdg.hareshkh.omdb.retrofit.ApiCall;
 import com.sdsmdg.hareshkh.omdb.utilities.DividerItemDecoration;
 import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 
@@ -30,8 +29,18 @@ public class ListRecyclerFragment extends Fragment {
     private LinearLayoutManager linearLayoutManager;
     public TextView message;
 
+    private OnLoadMoreListener mOnLoadMoreListener;
+
+    private boolean isLoading;
+    private int visibleThreshold = 5;
+    private int lastVisibleItem, totalItemCount;
+
     public ListRecyclerFragment() {
         // Required empty public constructor
+    }
+
+    public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
+        this.mOnLoadMoreListener = mOnLoadMoreListener;
     }
 
     @Override
@@ -61,13 +70,34 @@ public class ListRecyclerFragment extends Fragment {
             linearLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
             movieListRecycler.setLayoutManager(linearLayoutManager);
 
-            listRecyclerAdapter = new ListRecyclerAdapter(getContext(), movies, linearLayoutManager);
+            listRecyclerAdapter = new ListRecyclerAdapter(getContext(), movies);
             movieListRecycler.setAdapter(listRecyclerAdapter);
 
             movieListRecycler.setItemAnimator(new DefaultItemAnimator());
             movieListRecycler.addItemDecoration(new DividerItemDecoration(getContext(), LinearLayoutManager.VERTICAL));
+
+            movieListRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+
+                    totalItemCount = linearLayoutManager.getItemCount();
+                    lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+
+                    if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                        if (mOnLoadMoreListener != null) {
+                            mOnLoadMoreListener.onLoadMore();
+                        }
+                        isLoading = true;
+                    }
+                }
+            });
         }
         movieListRecycler.setVisibility(View.GONE);
         message.setVisibility(View.VISIBLE);
+    }
+
+    public void setLoaded() {
+        isLoading = false;
     }
 }

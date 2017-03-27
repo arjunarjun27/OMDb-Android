@@ -21,43 +21,13 @@ public class ListRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private Context context;
     private ArrayList<MovieModel> movies;
-    private RecyclerView recyclerView;
-    private LinearLayoutManager layoutManager;
 
     private final int VIEW_TYPE_ITEM = 0;
     private final int VIEW_TYPE_LOADING = 1;
 
-    private OnLoadMoreListener mOnLoadMoreListener;
-
-    private boolean isLoading;
-    private int visibleThreshold = 5;
-    private int lastVisibleItem, totalItemCount;
-
-    public ListRecyclerAdapter(Context context, ArrayList<MovieModel> movies, LinearLayoutManager manager) {
+    public ListRecyclerAdapter(Context context, ArrayList<MovieModel> movies) {
         this.context = context;
         this.movies = movies;
-        this.layoutManager = manager;
-
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-
-                totalItemCount = layoutManager.getItemCount();
-                lastVisibleItem = layoutManager.findLastVisibleItemPosition();
-
-                if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-                    if (mOnLoadMoreListener != null) {
-                        mOnLoadMoreListener.onLoadMore();
-                    }
-                    isLoading = true;
-                }
-            }
-        });
-    }
-
-    public void setOnLoadMoreListener(OnLoadMoreListener mOnLoadMoreListener) {
-        this.mOnLoadMoreListener = mOnLoadMoreListener;
     }
 
     @Override
@@ -94,10 +64,6 @@ public class ListRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public int getItemCount() {
         return movies == null ? 0 : movies.size();
-    }
-
-    public void setLoaded() {
-        isLoading = false;
     }
 
     static class MovieViewHolder extends RecyclerView.ViewHolder {

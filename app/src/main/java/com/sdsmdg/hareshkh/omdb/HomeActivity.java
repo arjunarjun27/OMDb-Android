@@ -25,6 +25,7 @@ import com.sdsmdg.hareshkh.omdb.utilities.OnLoadMoreListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Handler;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -161,7 +162,7 @@ public class HomeActivity extends AppCompatActivity {
                         movies.remove(movies.size() - 1);
                         listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
                         listFragment.listRecyclerAdapter.notifyDataSetChanged();
-                        listFragment.listRecyclerAdapter.setLoaded();
+                        listFragment.setLoaded();
                     }
                 }
 
@@ -170,7 +171,7 @@ public class HomeActivity extends AppCompatActivity {
                     movies.remove(movies.size() - 1);
                     listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
                     listFragment.listRecyclerAdapter.notifyDataSetChanged();
-                    listFragment.listRecyclerAdapter.setLoaded();
+                    listFragment.setLoaded();
                 }
             });
         }
@@ -202,21 +203,24 @@ public class HomeActivity extends AppCompatActivity {
     private void isDataFetchComplete(int count) {
         if (count == searchResult.getSearch().size()) {
             progressDialog.dismiss();
-            movies.remove(movies.size() - 1);
-            listFragment.listRecyclerAdapter.notifyItemRemoved(movies.size());
+            for (int i = 0; i < movies.size(); i++) {
+                if (movies.get(i) == null) {
+                    movies.remove(i);
+                    listFragment.listRecyclerAdapter.notifyItemRemoved(i);
+                }
+            }
             listFragment.listRecyclerAdapter.notifyDataSetChanged();
-            listFragment.listRecyclerAdapter.setLoaded();
+            listFragment.setLoaded();
             gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
         }
     }
 
     private void setupLazyLoad() {
-        listFragment.listRecyclerAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
+        listFragment.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore() {
                 movies.add(null);
                 listFragment.listRecyclerAdapter.notifyItemInserted(movies.size() - 1);
-
                 getData(latestQuery, false);
             }
         });
