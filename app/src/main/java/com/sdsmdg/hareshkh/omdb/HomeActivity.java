@@ -32,8 +32,9 @@ import retrofit2.Response;
 public class HomeActivity extends AppCompatActivity {
 
     private final String TAG = "HomeActivity";
-    public static SearchResultModel searchResult;
+    public SearchResultModel searchResult;
     public static ArrayList<MovieModel> movies;
+    public ArrayList<String> imdbIds;
 
     private Toolbar toolbar;
     private TabLayout tabLayout;
@@ -50,6 +51,7 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         movies = new ArrayList<>();
+        imdbIds = new ArrayList<>();
 
         listFragment = new ListRecyclerFragment();
         gridFragment = new GridRecyclerFragment();
@@ -99,12 +101,39 @@ public class HomeActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    public void getData(String query) {
-        ApiCall.Factory.getInstance().search(query, "movie").enqueue(new Callback<SearchResultModel>() {
+    public void getData(final String query) {
+        imdbIds.clear();
+        ApiCall.Factory.getInstance().search(query, "movie", 1).enqueue(new Callback<SearchResultModel>() {
             @Override
             public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
                 searchResult = response.body();
                 if (searchResult.getResponse().equals("True")) {
+                    for (int i = 0; i < searchResult.getSearch().size(); i++) {
+                        imdbIds.add(searchResult.getSearch().get(i).getImdbID());
+                    }
+
+                    /*
+                     * Getting all other pages for the same query as the first request only returns
+                     * the first page.
+                     */
+                    for (int i = 2; i <= (Integer.parseInt(searchResult.getTotalResults()) % 10) + 1; i++) {
+                        ApiCall.Factory.getInstance().search(query, "movie", i).enqueue(new Callback<SearchResultModel>() {
+                            @Override
+                            public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
+                                searchResult = response.body();
+                                for (int i = 0; i < searchResult.getSearch().size(); i++) {
+                                    imdbIds.add(searchResult.getSearch().get(i).getImdbID());
+                                }
+                                getMovies();
+                            }
+
+                            @Override
+                            public void onFailure(Call<SearchResultModel> call, Throwable t) {
+
+                            }
+                        });
+                    }
+
                     getMovies();
                     listFragment.message.setVisibility(View.GONE);
                     gridFragment.message.setVisibility(View.GONE);
@@ -128,6 +157,16 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<SearchResultModel> call, Throwable t) {
                 Log.e(TAG, "Failure : " + t.getMessage());
+                movies.clear();
+                progressDialog.dismiss();
+                listFragment.listRecyclerAdapter.notifyDataSetChanged();
+                gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
+                listFragment.message.setText("Query request failed. Try again");
+                gridFragment.message.setText("Query request failed. Try again");
+                listFragment.message.setVisibility(View.VISIBLE);
+                gridFragment.message.setVisibility(View.VISIBLE);
+                listFragment.movieListRecycler.setVisibility(View.GONE);
+                gridFragment.movieGridRecycler.setVisibility(View.GONE);
             }
         });
     }
@@ -135,8 +174,8 @@ public class HomeActivity extends AppCompatActivity {
     public void getMovies() {
         movies.clear();
         final int[] count = {0};
-        for (int i = 0; i < searchResult.getSearch().size(); i++) {
-            String imdbId = searchResult.getSearch().get(i).getImdbID();
+        for (int i = 0; i < imdbIds.size(); i++) {
+            String imdbId = imdbIds.get(i);
             ApiCall.Factory.getInstance().getMovie(imdbId).enqueue(new Callback<MovieModel>() {
                 @Override
                 public void onResponse(Call<MovieModel> call, Response<MovieModel> response) {
