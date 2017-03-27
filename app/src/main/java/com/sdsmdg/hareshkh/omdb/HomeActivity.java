@@ -121,8 +121,8 @@ public class HomeActivity extends AppCompatActivity {
                             @Override
                             public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
                                 searchResult = response.body();
-                                for (int i = 0; i < searchResult.getSearch().size(); i++) {
-                                    imdbIds.add(searchResult.getSearch().get(i).getImdbID());
+                                for (int j = 0; j < searchResult.getSearch().size(); j++) {
+                                    imdbIds.add(searchResult.getSearch().get(j).getImdbID());
                                 }
                                 getMovies();
                             }

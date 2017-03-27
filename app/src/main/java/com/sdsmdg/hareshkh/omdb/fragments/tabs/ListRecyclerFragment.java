@@ -16,6 +16,7 @@ import com.sdsmdg.hareshkh.omdb.HomeActivity;
 import com.sdsmdg.hareshkh.omdb.R;
 import com.sdsmdg.hareshkh.omdb.adapters.ListRecyclerAdapter;
 import com.sdsmdg.hareshkh.omdb.models.MovieModel;
+import com.sdsmdg.hareshkh.omdb.utilities.DividerItemDecoration;
 
 import java.util.ArrayList;
 
@@ -59,6 +60,7 @@ public class ListRecyclerFragment extends Fragment {
             linearLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
             movieListRecycler.setLayoutManager(linearLayoutManager);
             movieListRecycler.setItemAnimator(new DefaultItemAnimator());
+            movieListRecycler.addItemDecoration(new DividerItemDecoration(getContext(), LinearLayoutManager.VERTICAL));
             movieListRecycler.setAdapter(listRecyclerAdapter);
         }
         movieListRecycler.setVisibility(View.GONE);
