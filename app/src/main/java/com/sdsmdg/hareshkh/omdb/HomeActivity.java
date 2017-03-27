@@ -102,20 +102,17 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public void getData(final String query) {
+        movies.clear();
         imdbIds.clear();
         ApiCall.Factory.getInstance().search(query, "movie", 1).enqueue(new Callback<SearchResultModel>() {
             @Override
             public void onResponse(Call<SearchResultModel> call, Response<SearchResultModel> response) {
                 searchResult = response.body();
                 if (searchResult.getResponse().equals("True")) {
+                    //Movie Found
                     for (int i = 0; i < searchResult.getSearch().size(); i++) {
                         imdbIds.add(searchResult.getSearch().get(i).getImdbID());
                     }
-
-                    /*
-                     * Getting all other pages for the same query as the first request only returns
-                     * the first page.
-                     */
                     for (int i = 2; i <= (Integer.parseInt(searchResult.getTotalResults()) % 10) + 1; i++) {
                         ApiCall.Factory.getInstance().search(query, "movie", i).enqueue(new Callback<SearchResultModel>() {
                             @Override
@@ -135,13 +132,13 @@ public class HomeActivity extends AppCompatActivity {
                     }
 
                     getMovies();
+
                     listFragment.message.setVisibility(View.GONE);
                     gridFragment.message.setVisibility(View.GONE);
                     listFragment.movieListRecycler.setVisibility(View.VISIBLE);
                     gridFragment.movieGridRecycler.setVisibility(View.VISIBLE);
                 } else {
                     //Movie not found
-                    movies.clear();
                     progressDialog.dismiss();
                     listFragment.listRecyclerAdapter.notifyDataSetChanged();
                     gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
@@ -157,7 +154,6 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<SearchResultModel> call, Throwable t) {
                 Log.e(TAG, "Failure : " + t.getMessage());
-                movies.clear();
                 progressDialog.dismiss();
                 listFragment.listRecyclerAdapter.notifyDataSetChanged();
                 gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
@@ -172,7 +168,6 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public void getMovies() {
-        movies.clear();
         final int[] count = {0};
         for (int i = 0; i < imdbIds.size(); i++) {
             String imdbId = imdbIds.get(i);
@@ -196,7 +191,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void isDataFetchComplete(int count) {
-        if (count == searchResult.getSearch().size()) {
+        if (count == imdbIds.size()) {
             progressDialog.dismiss();
             listFragment.listRecyclerAdapter.notifyDataSetChanged();
             gridFragment.gridRecyclerAdapter.notifyDataSetChanged();
